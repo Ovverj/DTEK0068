@@ -15,15 +15,15 @@ int main(void) {
     
     while (1) 
     {
-        //IF button is pressed, do something. 
+        //IF button is not pressed, do something. 
         if(PORTF.IN & 0b01000000)
         {
-            //Turn on the led
+            //Turn off the led
             PORTF.OUT = 0b00100000;
         }
         else
         {
-            //Turn the led off
+            //Turn the led on
             PORTF.OUT = 0b00000000;
         }
     }
