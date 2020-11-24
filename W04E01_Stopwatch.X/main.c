@@ -110,9 +110,11 @@ int main(void)
  * if stopped on even or odd seconds.
  * 
  */
-ISR(PORTF_PORT_vect){
+ISR(PORTF_PORT_vect)
+{
         
-    if(instruct == 1){
+    if(instruct == 1)
+    {
         instruct = 2;
         PORTF.OUT = PIN5_bm;
 
@@ -127,30 +129,35 @@ ISR(PORTF_PORT_vect){
          * Personally would prefer to use that, 
          * because why reset something that hasn't been changed.
          */
-        if(instruct == 2){
+        if(instruct == 2)
+        {
             instruct = 0;
             printf("RESET\r\n");
             count = 1;
         }
-        else{
+        else
+        {
             printf("0\r\n"); //this can be removed to start counter from 1
             instruct = 1;
         }
     }
     PORTF.INTFLAGS = PORTF.INTFLAGS;
-    }
+}
 /*
  * Catch RTC flags to start the timer
  * each flag happens in interval of 1 sec and adds +1 to count after print
  * 
  */
-ISR(RTC_PIT_vect){
-    if(instruct == 1){
+ISR(RTC_PIT_vect)
+{
+    if(instruct == 1)
+    {
         printf("%d\r\n", count++);
         RTC.PITINTFLAGS = RTC_PI_bm;
         PORTF.OUTTGL = PIN5_bm;
     }
-    else{
+    else
+    {
         RTC.PITINTFLAGS = RTC_PI_bm;
     }   
 }
