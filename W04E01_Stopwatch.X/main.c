@@ -150,7 +150,6 @@ ISR(RTC_PIT_vect){
         RTC.PITINTFLAGS = RTC_PI_bm;
         PORTF.OUTTGL = PIN5_bm;
     }
-    //not sure if this is necessary, decided to clear flags anyway to be 
     else{
         RTC.PITINTFLAGS = RTC_PI_bm;
     }   
