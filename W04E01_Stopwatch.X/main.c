@@ -23,12 +23,11 @@
 
 /*
  * Init 2 integers: count counter and instruct for counter state
- * if the counter should start from 1 instead of 0 set count to 1
- * and check the statements at the bottom
  * instructions said its ok to start from 0, not sure if its desired
+ * I commented the line below that can be removed to start the counter from 1
  */
 
-uint16_t count = 0;
+uint16_t count = 1;
 uint8_t instruct = 0;
 
 /*
@@ -105,25 +104,36 @@ int main(void)
 }
 /*
  * Configure button press flags to set instruct value accordingly
- * Also prints out the action of the button press
+ * Shuts down led when stopped to avoid dependency 
+ * regarding the led state on when stopped
+ * This is mostly cosmetic, didn't like the fact that the use is not uniform
+ * if stopped on even or odd seconds.
+ * 
  */
 ISR(PORTF_PORT_vect){
         
     if(instruct == 1){
-        instruct = 0;
-        printf("STOP\r\n");
+        instruct = 2;
         PORTF.OUT = PIN5_bm;
 
     }
     else
     {
-        if(count > 0){
+        /*
+         * Reset occurs even if there is nothing to reset,
+         * this is by design due to instructions, setting if statement as
+         * if(count > 1) makes it so the reset only works when
+         * there is something to reset.
+         * Personally would prefer to use that, 
+         * because why reset something that hasn't been changed.
+         */
+        if(instruct == 2){
             instruct = 0;
             printf("RESET\r\n");
-            count = 0;
+            count = 1;
         }
         else{
-            printf("START\r\n");
+            printf("0\r\n"); //this can be removed to start counter from 1
             instruct = 1;
         }
     }
