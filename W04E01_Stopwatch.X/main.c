@@ -3,6 +3,13 @@
  * Author: dtek0068
  *
  * Created on 24 November 2020, 15:33
+ *
+ * some notes from yours truly:
+ * Really liked this exercise, finally felt like I got something figured out
+ * Thank you for the excellent advice in W04E01-advice.pdf
+ * It really helped me to understand the code for AVR rather than 
+ * using trial and error to get somewhat desired outcomes.
+ * 
  */
 #define F_CPU 3333333
 #define USART0_BAUD_RATE(BAUD_RATE) \
@@ -26,7 +33,7 @@ uint8_t instruct = 0;
 
 /*
  * Copied code from microchips github to allow printing to terminal
- * used for numeric values of the stopwatch and start, stop etc
+ * used for numeric values of the stopwatch and "start", "stop" etc
  */
 
 static void USART0_sendChar(char c)
@@ -66,17 +73,18 @@ int main(void)
     /*
      * init pins for led and button
      * set button to send flag when pressed
+     * also turn off led after init to avoid undesired light
      */
     PORTF.DIRCLR = PIN6_bm;
-    
     PORTF.PIN6CTRL = PORT_ISC_FALLING_gc;
+    
     PORTF.DIRSET = PIN5_bm;
     PORTF.OUT = PIN5_bm;
     
     /*
      * Init RTC counter with 1 second delay
      */
-     
+    
     
     RTC.PITINTCTRL = RTC_PI_bm;
     RTC.PITCTRLA = RTC_PERIOD_CYC32768_gc | RTC_PITEN_bm;
