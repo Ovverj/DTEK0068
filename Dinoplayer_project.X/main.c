@@ -6,19 +6,16 @@
  */
 #define F_CPU   3333333
 #define RTC_PERIOD            (511)
-#define USART0_BAUD_RATE(BAUD_RATE) \
-((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
 #include <stdint.h>
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/interrupt.h>
 #include <string.h>
-#include <stdio.h>
 
 #define SERVO_PWM_PERIOD   (0x1046)
 #define SERVO_PWM_DUTY_NEUTRAL (0x0138)
 
+//init methods for ldr value reading
 void ADC0_init(void);
 uint16_t ADC0_read(void);
 // Saving the value of LDR in this variable
@@ -63,39 +60,11 @@ uint16_t ADC0_read(void)
     
     return ADC0.RES;
 }
-static void USART0_sendChar(char c)
-{
-    while (!(USART0.STATUS & USART_DREIF_bm))
-    {
-        ;
-    }
-    USART0.TXDATAL = c;
-}
 
-static int USART0_printChar(char c, FILE *stream)
-{ 
-    USART0_sendChar(c);
-    return 0; 
-}
-
-static FILE USART_stream = \
-FDEV_SETUP_STREAM(USART0_printChar, NULL, _FDEV_SETUP_WRITE);
-
-static void USART0_init(void)
-{
-    PORTA.DIR |= PIN0_bm;
-    
-    USART0.BAUD = (uint16_t)USART0_BAUD_RATE(9600); 
-    
-    USART0.CTRLB |= USART_TXEN_bm;  
-    
-    stdout = &USART_stream;
-}
 
 int main(void) 
 {
     ADC0_init();
-    USART0_init();
     
     
     // Route TCA0 PWM waveform to PORTB
@@ -114,9 +83,11 @@ int main(void)
     TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP2EN_bm;
     // Enable TCA0 peripheral
     TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
+    //Read ldr data
     adc_raw = ADC0_read();
+    //Create autosetup for ldr trigger
     uint16_t max;
-    max = adc_raw + 32;
+    max = adc_raw + 10;
     
     
     while (1) 
@@ -124,17 +95,19 @@ int main(void)
 
         // Checking the LDR value
         adc_raw = ADC0_read();
-        printf("%d\r\n",adc_raw);
 
-            if(adc_raw > max)
-            {
-                TCA0.SINGLE.CMP2BUF = 400;
+        //detect cactus
+        if(adc_raw > max)
+        {
+            //rotate servo to click
+            TCA0.SINGLE.CMP2BUF = 385;
                  
-            }
-            else
-            {
-                TCA0.SINGLE.CMP2BUF = 355;
+        }
+        else
+        {
+            //rotate servo to return
+            TCA0.SINGLE.CMP2BUF = 360;
 
-            }        
+        }        
     }
 }
