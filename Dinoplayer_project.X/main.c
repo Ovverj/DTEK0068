@@ -1,19 +1,19 @@
 /*
  * File:   main.c
- * Author: dtek0068
+ * Author: ovverj, jihjer, tbalva
  *
  * Created on 14 December 2020, 15:24
  */
 #define F_CPU   3333333
 #define RTC_PERIOD            (511)
+#define SERVO_PWM_PERIOD   (0x1046)
+#define SERVO_PWM_DUTY_NEUTRAL (0x0138)
 
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
 
-#define SERVO_PWM_PERIOD   (0x1046)
-#define SERVO_PWM_DUTY_NEUTRAL (0x0138)
 
 //init methods for ldr value reading
 void ADC0_init(void);
@@ -87,7 +87,7 @@ int main(void)
     adc_raw = ADC0_read();
     //Create autosetup for ldr trigger
     uint16_t max;
-    max = adc_raw + 10;
+    max = adc_raw + 5;
     
     
     while (1) 
