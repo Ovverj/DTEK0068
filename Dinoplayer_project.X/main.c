@@ -18,6 +18,8 @@
 //init methods for ldr value reading
 void adc0_init(void);
 uint16_t adc0_read(void);
+// Saving the value of LDR in this variable
+volatile uint16_t adc_raw;
 
 
 
@@ -59,7 +61,11 @@ uint16_t adc0_read(void)
     
     return ADC0.RES;
 }
-
+ISR(ADC0_RESRDY_vect)
+{
+    //Read LDR value to clear interrupt flag
+    adc_raw = ADC0.RES;
+}
 
 int main(void) 
 {
@@ -83,10 +89,9 @@ int main(void)
     // Enable TCA0 peripheral
     TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
     
-    // Saving the value of LDR in this variable
-    uint16_t adc_raw;
-    //Read ldr data
-    adc_raw = adc0_read();
+    //ADC cnfiguration, enable result ready interrupt
+    ADC0.INTCTRL = ADC_RESRDY_bm;
+    sei();
     //Create autosetup for ldr trigger
     uint16_t max;
     max = adc_raw + 5;  //this value is used to enable autosetup
