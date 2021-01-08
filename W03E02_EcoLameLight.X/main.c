@@ -1,5 +1,5 @@
 /*
- * File:   main'.c
+ * File:   main.c
  * Author: dtek0068
  *
  * Created on 15 November 2020, 23:37

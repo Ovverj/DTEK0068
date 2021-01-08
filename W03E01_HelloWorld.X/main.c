@@ -12,11 +12,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <string.h>
+#include <avr/iom4809.h>
 
 void USART0_init(void);
 void USART0_sendChar(char c);
 void USART0_sendString(char *str);
-
+PORTE.DIRCLR = PIN0_bm;
+int val = 0;
 void USART0_init(void)
 {
     PORTA.DIR &= ~PIN1_bm;
@@ -50,7 +52,8 @@ int main(void)
     
     while (1) 
     {
-        USART0_sendString("Hello World!\r\n");
+        val = PIN0_bm;
+        USART0_sendString("%d", val);
         _delay_ms(500);
     }
 }

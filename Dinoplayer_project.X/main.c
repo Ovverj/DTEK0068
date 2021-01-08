@@ -16,13 +16,12 @@
 
 
 //init methods for ldr value reading
-void ADC0_init(void);
-uint16_t ADC0_read(void);
-// Saving the value of LDR in this variable
-uint16_t adc_raw;
+void adc0_init(void);
+uint16_t adc0_read(void);
 
 
-void ADC0_init(void)
+
+void adc0_init(void)
 {
     /* Disable digital input buffer */
     PORTE.PIN0CTRL &= ~PORT_ISC_gm;
@@ -44,7 +43,7 @@ void ADC0_init(void)
 
 
 
-uint16_t ADC0_read(void)
+uint16_t adc0_read(void)
 {
     /* Start ADC conversion */
     ADC0.COMMAND = ADC_STCONV_bm;
@@ -64,7 +63,7 @@ uint16_t ADC0_read(void)
 
 int main(void) 
 {
-    ADC0_init();
+    adc0_init();
     
     
     // Route TCA0 PWM waveform to PORTB
@@ -83,29 +82,39 @@ int main(void)
     TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP2EN_bm;
     // Enable TCA0 peripheral
     TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
+    
+    // Saving the value of LDR in this variable
+    uint16_t adc_raw;
     //Read ldr data
-    adc_raw = ADC0_read();
+    adc_raw = adc0_read();
     //Create autosetup for ldr trigger
     uint16_t max;
-    max = adc_raw + 5;
+    max = adc_raw + 5;  //this value is used to enable autosetup
+                        //the value is derived from the white background
+                        //of the game and when cactus comes near ldr
+                        //this threshold of 5 is broken and engages jump
     
     
     while (1) 
     {
 
         // Checking the LDR value
-        adc_raw = ADC0_read();
+        adc_raw = adc0_read();
 
         //detect cactus
-        if(adc_raw > max)
+        if(adc_raw > max)  
         {
-            //rotate servo to click
+            //rotate servo to click, value depends on keyboard used
+            //value 385 rotates the servo a couple degrees from flat (360)
+            //Thus pressing spacebar and jumping with the dino
             TCA0.SINGLE.CMP2BUF = 385;
                  
         }
         else
         {
             //rotate servo to return
+            //the value 360 is used as neutral ground (flat)
+            //When servo gets value 360 it is hovering on top of spacebar
             TCA0.SINGLE.CMP2BUF = 360;
 
         }        

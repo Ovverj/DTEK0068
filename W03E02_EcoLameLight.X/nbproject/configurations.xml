@@ -34,7 +34,7 @@
         <platform>2</platform>
       </toolsSet>
       <packs>
-        <pack name="ATmega_DFP" vendor="Microchip" version="2.2.108"/>
+        <pack name="ATmega_DFP" vendor="Microchip" version="2.1.87"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>
