@@ -122,7 +122,7 @@ int main(void)
             if(adc_raw > max)
             {
                 /*rotate servo to click, value depends on keyboard used
-                *value 385 rotates the servo a couple degrees from flat (360)
+                *value 245 rotates the servo a couple degrees from flat (295)
                 *Thus pressing spacebar and jumping with the dino
                 */
                 TCA0.SINGLE.CMP2BUF = 245;
