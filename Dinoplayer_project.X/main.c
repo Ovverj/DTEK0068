@@ -4,6 +4,7 @@
  *
  * Created on 14 December 2020, 15:24
  */
+
 #define F_CPU   3333333
 #define RTC_PERIOD            (511)
 #define SERVO_PWM_PERIOD   (0x1046)
@@ -12,17 +13,19 @@
 #include <stdint.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <string.h>
 #include <avr/sleep.h>
 
-
-
-//init methods for ldr value reading
+/* These both methods are copied from 
+*http://ww1.microchip.com \
+* /downloads/en/Appnotes/TB3209-Getting-Started-with-ADC-90003209A.pdf
+* with minor corrections to right ports and pins
+*/
 void adc0_init(void);
 uint16_t adc0_read(void);
+// Saving the value of LDR in this variable
+uint16_t adc_raw;
+// Saving button status on this value to determine if running or sleeping
 volatile uint16_t status;
-
-
 
 void adc0_init(void)
 {
@@ -33,9 +36,9 @@ void adc0_init(void)
     /* Disable pull-up resistor */
     PORTE.PIN0CTRL &= ~PORT_PULLUPEN_bm;
 
+    // Setting Vref to 2,5V
     VREF.CTRLA = VREF_ADC0REFSEL_2V5_gc;
-    ADC0.CTRLC = ADC_PRESC_DIV4_gc;      /* CLK_PER divided by 4 */
-                 /* Internal reference */
+    ADC0.CTRLC = ADC_PRESC_DIV4_gc;    /* CLK_PER divided by 4 */
     
     ADC0.CTRLA = ADC_ENABLE_bm          /* ADC Enable: enabled */
                | ADC_RESSEL_10BIT_gc;   /* 10-bit mode */
@@ -43,8 +46,6 @@ void adc0_init(void)
     /* Select ADC channel */
     ADC0.MUXPOS  = ADC_MUXPOS_AIN8_gc;
 }
-
-
 
 uint16_t adc0_read(void)
 {
@@ -62,7 +63,6 @@ uint16_t adc0_read(void)
     
     return ADC0.RES;
 }
-
 
 int main(void) 
 {
@@ -86,7 +86,7 @@ int main(void)
     // Enable TCA0 peripheral
     TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
     
-    PORTF.DIRCLR = PIN6_bm; //configure onboard button
+    PORTF.DIRCLR = PIN6_bm; // Set onboard button as Input
     
     PORTF.PIN6CTRL = PORT_ISC_FALLING_gc; //set button as trigger for intflag
     
@@ -94,50 +94,55 @@ int main(void)
     
     sei(); //enable interrupts
     
-    //set status as 0
+    // Setting status to 0 so device is running from as code is ran
     status = 0;
-    // Saving the value of LDR in this variable
-    uint16_t adc_raw;
-    //Read ldr data
-    adc_raw = adc0_read();
-    //Create autosetup for ldr trigger
-    uint16_t max;
-    max = adc_raw + 5;  //this value is used to enable autosetup
-                        //the value is derived from the white background
-                        //of the game and when cactus comes near ldr
-                        //this threshold of 5 is broken and engages jump
     
+    /* Checking the LDR value at the beginning and setting
+     * limit value in variable max for servo to know, when to rotate to
+     */
+    adc_raw = adc0_read();
+    uint16_t max = adc_raw + 12;
     
     while (1) 
     {
-
-        if (status = 1)
+        //Checking if button is pressed to set status to 1 to put device asleep
+        if(status == 1)
         {
-            sleep_mode(); //set the device asleep
+            sleep_mode();
         }
+        // Else status is 0, device is running
         else
         {
             // Checking the LDR value
             adc_raw = adc0_read();
-
-            //detect cactus
-            if(adc_raw > max)  
+        
+            /* If LDR value is more than limit value Max, Servo rotates
+            * and clicks space.
+            */
+            if(adc_raw > max)
             {
-                //rotate servo to click, value depends on keyboard used
-                //value 385 rotates the servo a couple degrees from flat (360)
-                //Thus pressing spacebar and jumping with the dino
-                TCA0.SINGLE.CMP2BUF = 385;                 
+                /*rotate servo to click, value depends on keyboard used
+                *value 385 rotates the servo a couple degrees from flat (360)
+                *Thus pressing spacebar and jumping with the dino
+                */
+                TCA0.SINGLE.CMP2BUF = 245;
+            
             }
+            /*Else rotate Servo back to this position
+            * value can be changed depending on keyboard
+            */
             else
             {
-                //rotate servo to return
-                //the value 360 is used as neutral ground (flat)
-                //When servo gets value 360 it is hovering on top of spacebar
-                TCA0.SINGLE.CMP2BUF = 360;
+                TCA0.SINGLE.CMP2BUF = 295;
             }
-        }        
+        }
+        
     }
 }
+/* Interrupt service routine, used to set device on sleep or running by
+ * pressing button onboard. Device starts running and by pressing button
+ * you can set device asleep. Pressing button again wakes the device up.
+ */
 ISR(PORTF_PORT_vect)
 {
     if(status == 0)
