@@ -13,11 +13,14 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <string.h>
+#include <avr/sleep.h>
+
 
 
 //init methods for ldr value reading
 void adc0_init(void);
 uint16_t adc0_read(void);
+volatile uint16_t status;
 
 
 
@@ -83,6 +86,16 @@ int main(void)
     // Enable TCA0 peripheral
     TCA0.SINGLE.CTRLA |= TCA_SINGLE_ENABLE_bm;
     
+    PORTF.DIRCLR = PIN6_bm; //configure onboard button
+    
+    PORTF.PIN6CTRL = PORT_ISC_FALLING_gc; //set button as trigger for intflag
+    
+    set_sleep_mode(SLPCTRL_SMODE_IDLE_gc); //enable sleep mode
+    
+    sei(); //enable interrupts
+    
+    //set status as 0
+    status = 0;
     // Saving the value of LDR in this variable
     uint16_t adc_raw;
     //Read ldr data
@@ -98,25 +111,44 @@ int main(void)
     while (1) 
     {
 
-        // Checking the LDR value
-        adc_raw = adc0_read();
-
-        //detect cactus
-        if(adc_raw > max)  
+        if (status = 1)
         {
-            //rotate servo to click, value depends on keyboard used
-            //value 385 rotates the servo a couple degrees from flat (360)
-            //Thus pressing spacebar and jumping with the dino
-            TCA0.SINGLE.CMP2BUF = 385;
-                 
+            sleep_mode(); //set the device asleep
         }
         else
         {
-            //rotate servo to return
-            //the value 360 is used as neutral ground (flat)
-            //When servo gets value 360 it is hovering on top of spacebar
-            TCA0.SINGLE.CMP2BUF = 360;
+            // Checking the LDR value
+            adc_raw = adc0_read();
 
+            //detect cactus
+            if(adc_raw > max)  
+            {
+                //rotate servo to click, value depends on keyboard used
+                //value 385 rotates the servo a couple degrees from flat (360)
+                //Thus pressing spacebar and jumping with the dino
+                TCA0.SINGLE.CMP2BUF = 385;                 
+            }
+            else
+            {
+                //rotate servo to return
+                //the value 360 is used as neutral ground (flat)
+                //When servo gets value 360 it is hovering on top of spacebar
+                TCA0.SINGLE.CMP2BUF = 360;
+            }
         }        
     }
+}
+ISR(PORTF_PORT_vect)
+{
+    if(status == 0)
+    {
+        //set status value to 1 to enable sleep mode
+        status = 1;
+    }
+    else
+    {
+        //set status to 0 to run the dinoplayer
+        status = 0; 
+    }
+    PORTF.INTFLAGS = PIN6_bm; //clear the intflag
 }
